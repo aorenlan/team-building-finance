@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团建记账管理系统</title>
+    <style>
+        :root {
+            --income: #00C853;
+            --advance: #FF6F00;
+            --expense: #FF5252;
+            --bg: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            background: var(--glass);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .stat-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .stat-amount {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .balance-detail {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .advance-amount {
+            color: var(--advance);
+            font-weight: 500;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input, select, button {
+            padding: 0.8rem 1.2rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #2196F3;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+        }
+
+        .filters {
+            display: flex;
+            gap: 8px;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        /* 过滤按钮：未选中状态增加默认文字颜色 */
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: white;
+            color: #333;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .filter-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: transparent;
+        }
+
+        .filter-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .records {
+            margin-top: 1.5rem;
+        }
+
+        .record {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .record:hover {
+            transform: translateX(5px);
+        }
+
+        .category-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            margin-right: 12px;
+        }
+
+        .category-tag.income { background: rgba(0, 200, 83, 0.1); color: var(--income); }
+        .category-tag.advance { background: rgba(255, 111, 0, 0.1); color: var(--advance); }
+        .category-tag.expense { background: rgba(255, 82, 82, 0.1); color: var(--expense); }
+
+        .record-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .record-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .record-desc {
+            color: #444;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .record-date {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .record-amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 120px;
+            text-align: right;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ff5252;
+            cursor: pointer;
+            padding: 8px;
+            margin-left: 12px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 82, 82, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .record {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .record-amount {
+                text-align: left;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 团建记账管理系统</h1>
+        
+        <div class="dashboard">
+            <div class="stat-card">
+                <h3>当前余额</h3>
+                <div class="stat-amount" id="total-balance">¥0.00</div>
+                <div class="balance-detail">
+                    (含垫资 <span class="advance-amount" id="total-advance">¥0.00</span>)
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>总收入</h3>
+                <div class="stat-amount" id="total-income">¥0.00</div>
+            </div>
+            <div class="stat-card">
+                <h3>总支出</h3>
+                <div class="stat-amount" id="total-expense">¥0.00</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="number" id="amount" placeholder="输入金额" step="0.01" min="0" required>
+            <select id="type">
+                <option value="收入">💰 正常收入</option>
+                <option value="垫资">⏳ 垫资收入</option>
+                <option value="团建">🎯 团建支出</option>
+                <option value="餐饮">🍔 餐饮支出</option>
+                <option value="交通">🚖 交通支出</option>
+                <option value="住宿">🏨 住宿支出</option>
+                <option value="其他">📦 其他支出</option>
+            </select>
+        </div>
+
+        <input type="text" id="description" placeholder="备注（可选）">
+        <button onclick="addRecord()">➕ 添加记录</button>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all" onclick="filterRecords('all')">全部记录</button>
+            <button class="filter-btn" data-filter="income" onclick="filterRecords('income')">正常收入</button>
+            <button class="filter-btn" data-filter="advance" onclick="filterRecords('advance')">垫资记录</button>
+            <button class="filter-btn" data-filter="expense" onclick="filterRecords('expense')">全部支出</button>
+        </div>
+
+        <div class="records" id="records"></div>
+    </div>
+
+    <script>
+        let records = JSON.parse(localStorage.getItem('records')) || [];
+        let currentFilter = 'all';
+
+        function formatCurrency(amount) {
+            return '¥' + amount.toFixed(2);
+        }
+
+        function updateStats() {
+            let totalIncome = 0;
+            let totalAdvance = 0;
+            let totalExpense = 0;
+
+            records.forEach(record => {
+                if (record.type === '收入') {
+                    totalIncome += record.amount;
+                } else if (record.type === '垫资') {
+                    totalAdvance += record.amount;
+                } else {
+                    totalExpense += record.amount;
+                }
+            });
+
+            document.getElementById('total-balance').textContent = 
+                formatCurrency(totalIncome + totalAdvance - totalExpense);
+            document.getElementById('total-income').textContent = 
+                formatCurrency(totalIncome + totalAdvance);
+            document.getElementById('total-expense').textContent = 
+                formatCurrency(totalExpense);
+            document.getElementById('total-advance').textContent = 
+                formatCurrency(totalAdvance);
+        }
+
+        function updateUI() {
+            const filteredRecords = records.filter(record => {
+                switch(currentFilter) {
+                    case 'income': return record.type === '收入';
+                    case 'advance': return record.type === '垫资';
+                    case 'expense': return !['收入', '垫资'].includes(record.type);
+                    default: return true;
+                }
+            });
+
+            const recordsDiv = document.getElementById('records');
+            recordsDiv.innerHTML = '';
+
+            // 倒序显示，最新的在最上面
+            filteredRecords.slice().reverse().forEach((record, index) => {
+                const div = document.createElement('div');
+                div.className = 'record';
+                
+                let categoryClass = 'expense';
+                let categoryIcon = '📦';
+                if (record.type === '收入') {
+                    categoryClass = 'income';
+                    categoryIcon = '💰';
+                } else if (record.type === '垫资') {
+                    categoryClass = 'advance';
+                    categoryIcon = '⏳';
+                }
+
+                div.innerHTML = `
+                    <div class="record-info">
+                        <div class="category-tag ${categoryClass}">
+                            ${categoryIcon} ${record.type}
+                        </div>
+                        <div class="record-details">
+                            <div class="record-desc">${record.description || '无备注'}</div>
+                            <div class="record-date">${record.date}</div>
+                        </div>
+                    </div>
+                    <div class="record-amount" style="color: ${categoryClass === 'income' ? 'var(--income)' : 
+                        categoryClass === 'advance' ? 'var(--advance)' : 'var(--expense)'}">
+                        ${['收入', '垫资'].includes(record.type) ? '+' : '-'}${formatCurrency(record.amount)}
+                    </div>
+                    <button class="delete-btn" onclick="deleteRecord(${records.length - 1 - index})">×</button>
+                `;
+                recordsDiv.appendChild(div);
+            });
+
+            localStorage.setItem('records', JSON.stringify(records));
+            updateStats();
+        }
+
+        function addRecord() {
+            const amountInput = document.getElementById('amount');
+            const type = document.getElementById('type').value;
+            const description = document.getElementById('description').value.trim();
+            const amount = parseFloat(amountInput.value);
+
+            if (!amount || amount <= 0) {
+                alert('请输入有效的金额');
+                amountInput.focus();
+                return;
+            }
+
+            const date = new Date().toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            records.push({
+                amount,
+                type,
+                description: description || undefined,
+                date,
+                timestamp: Date.now()
+            });
+
+            amountInput.value = '';
+            document.getElementById('description').value = '';
+            amountInput.focus();
+
+            updateUI();
+        }
+
+        function deleteRecord(index) {
+            if (confirm('确定要永久删除这条记录吗？')) {
+                records.splice(index, 1);
+                updateUI();
+            }
+        }
+
+        function filterRecords(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === type);
+            });
+            updateUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            records.sort((a, b) => a.timestamp - b.timestamp);
+            updateUI();
+        });
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addRecord();
+        });
+    </script>
+</body>
+</html>
